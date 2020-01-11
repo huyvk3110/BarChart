@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="X-UA-Compatible" content="ie=edge">
+    <script src="https://d3js.org/d3.v5.min.js"></script>
+    <link rel="stylesheet" href="./index.css">
+    <title>Document</title>
+</head>
+
+<body>
+    <div id="chart">
+        <p id="title">United States GDP</p>
+        <div id="content"></div>
+    </div>
+</body>
+<script>
+    fetch('https://raw.githubusercontent.com/freeCodeCamp/ProjectReferenceData/master/GDP-data.json')
+        .then(res => res.json())
+        .then(data => {
+            console.log(data);
+            //Variable
+            const width = 900;
+            const height = 420;
+            const paddingX = 50;
+            const paddingY = 20;
+            const dataset = data.data;
+            const yScale = d3.scaleLinear().domain([0, d3.max(dataset, o => o[1])]).range([height - paddingY, 0])
+            const xScale = d3.scaleLinear().domain([0, dataset.length]).range([0, width - paddingX])
+            console.log(yScale(dataset[0][1]))
+            //Chart
+            //-Tool tip
+            const tooltip = d3.select('div#content')
+                .append('div')
+                .attr('id', 'tooltip')
+                .style('opacity', '0')
+            //-SVG
+            const svg = d3.select('div#content')
+                .append('svg')
+                .attr('width', width)
+                .attr('height', height);
+            //-Rect
+            svg.selectAll('rect')
+                .data(dataset)
+                .enter()
+                .append('rect')
+                .attr('width', xScale(1))
+                .attr('height', o => height - paddingY - yScale(o[1]))
+                .attr('x', (o, i) => paddingX + xScale(i))
+                .attr('y', o => yScale(o[1]))
+                .attr('class', 'bar')
+                .attr('data-date', o => o[0])
+                .attr('data-gdp', o => o[1])
+                .style('fill', '#00600f')
+                .on("mouseover", o => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style("opacity", "1");
+                    tooltip.html(`Date: ${o[0]}<br/>GDP: ${o[1]}`)
+                        .style("left", `${d3.event.pageX - 50}px`)
+                        .style("top", `${d3.event.pageY - 80}px`);
+                })
+                .on('mouseout', o => {
+                    tooltip.transition()
+                        .duration(200)
+                        .style('opacity', "0");
+                })
+            //-GY
+            const yAxis = d3.axisLeft(yScale);
+            svg.append("g")
+                .attr("id", "y-axis")
+                .attr("transform", `translate(${paddingX},0)`)
+                .call(yAxis);
+            //-GX
+            const years = dataset.map(o => new Date(o[0]).getFullYear());
+            const dateScale = d3.scaleLinear().domain([d3.min(years), d3.max(years)]).range([0, width - paddingX])
+            const xAxis = d3.axisBottom(dateScale);
+            svg.append("g")
+                .attr("id", "x-axis")
+                .attr("transform", `translate(${paddingX},${height - paddingY})`)
+                .call(xAxis);
+        })
+
+</script>
+
+</html>
